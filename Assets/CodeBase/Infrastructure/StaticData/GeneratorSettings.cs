@@ -8,6 +8,9 @@ namespace CodeBase.Infrastructure.StaticData
     {
         [MinValue(0.001f)]
         public float Density;
+        [Min(1)]
+        public float DistanceBetweenTwoMeshes;
+        
         [MinValue("@Density*3"), BoxGroup("Fabric Parametres")]
         public float FabricWidth;
         [MinValue("@Density*3"), BoxGroup("Fabric Parametres")]

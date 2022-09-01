@@ -3,6 +3,7 @@ using System.Linq;
 using CodeBase.Infrastructure.Services.CutPointsGenerator;
 using CodeBase.Infrastructure.StaticData;
 using UnityEngine;
+using Zenject;
 
 namespace CodeBase.Infrastructure.Services.MeshGenerator
 {
@@ -11,45 +12,44 @@ namespace CodeBase.Infrastructure.Services.MeshGenerator
     {
         private readonly GeneratorSettings _generatorSettings;
         private readonly CutPointsGeneratorService _cutPointsGenerator;
+        private readonly DiContainer _diContainer;
 
-        public MeshGeneratorService(GeneratorSettings generatorSettings, CutPointsGeneratorService cutPointsGenerator)
+        public MeshGeneratorService(GeneratorSettings generatorSettings, CutPointsGeneratorService cutPointsGenerator, DiContainer diContainer, MeshSettings meshSettings)
         {
             _generatorSettings = generatorSettings;
             _cutPointsGenerator = cutPointsGenerator;
+            _diContainer = diContainer;
         }
 
-        public Mesh Generate()
+        public void Generate()
         {
-            GameObject meshObject = new GameObject("Mesh");
-            MeshFilter meshFilter = meshObject.AddComponent<MeshFilter>();
-            MeshRenderer meshRenderer = meshObject.AddComponent<MeshRenderer>();
-            Mesh mesh = new Mesh { name = "Generated mesh" };
-            meshFilter.mesh = mesh;
-            GameObject meshObject1 = new GameObject("Mesh");
-            MeshFilter meshFilter1 = meshObject1.AddComponent<MeshFilter>();
-            MeshRenderer meshRenderer1 = meshObject1.AddComponent<MeshRenderer>();
-            Mesh mesh1 = new Mesh { name = "Generated mesh" };
-            meshFilter1.mesh = mesh1;
-            Generate(meshFilter,meshFilter1);
-            return mesh;
+            MeshInfoContainer leftMeshInfo = new MeshInfoContainer(true);
+            MeshInfoContainer rightMeshInfo = new MeshInfoContainer(false);
+            Generate(leftMeshInfo,rightMeshInfo);
+            leftMeshInfo.GameObject.transform.position -= new Vector3(_generatorSettings.DistanceBetweenTwoMeshes/2, 0, 0);
+            rightMeshInfo.GameObject.transform.position += new Vector3(_generatorSettings.DistanceBetweenTwoMeshes/2, 0, 0);
+            leftMeshInfo.CreateMeshWave();
+            rightMeshInfo.CreateMeshWave();
+            _diContainer.Inject(leftMeshInfo.MeshWaveEntity);
+            _diContainer.Inject(rightMeshInfo.MeshWaveEntity);
         }
 
-        private void Generate(MeshFilter leftMeshFilter, MeshFilter rightMeshFilter)
+        private void Generate(MeshInfoContainer leftMeshInfoContainer, MeshInfoContainer rightMeshInfoContainer)
         {
-            BMesh leftMesh = new BMesh();
-            BMesh rightMesh = new BMesh();
             List<int> rowWidthLeft = new List<int>();
             List<int> rowWidthRight = new List<int>();
             
-            GenerateVertices(_cutPointsGenerator.Points, rowWidthLeft, rowWidthRight, leftMesh, rightMesh);
+            GenerateVertices(_cutPointsGenerator.Points, rowWidthLeft, rowWidthRight, leftMeshInfoContainer, rightMeshInfoContainer);
             
-            GenerateTriangles(leftMesh, rowWidthLeft, true);
-            GenerateTriangles(rightMesh, rowWidthRight, false);
-            BMeshUnity.SetInMeshFilter(leftMesh, leftMeshFilter);
-            BMeshUnity.SetInMeshFilter(rightMesh, rightMeshFilter);
+            GenerateTriangles(leftMeshInfoContainer, rowWidthLeft);
+            GenerateTriangles(rightMeshInfoContainer, rowWidthRight);
+            BMeshUnity.SetInMeshFilter(leftMeshInfoContainer.BMesh, leftMeshInfoContainer.MeshFilter);
+            BMeshUnity.SetInMeshFilter(rightMeshInfoContainer.BMesh, rightMeshInfoContainer.MeshFilter);
+            leftMeshInfoContainer.Mesh = leftMeshInfoContainer.MeshFilter.mesh;
+            rightMeshInfoContainer.Mesh = rightMeshInfoContainer.MeshFilter.mesh;
         }
 
-        private void GenerateVertices(List<Vector3> cutPoints, List<int> rowWidthLeft, List<int> rowWidthRight, BMesh leftMesh, BMesh rightMesh)
+        private void GenerateVertices(List<Vector3> cutPoints, List<int> rowWidthLeft, List<int> rowWidthRight, MeshInfoContainer leftMeshContainer, MeshInfoContainer rightMeshContainer)
         {
             for (int zIndex = 0; zIndex < _generatorSettings.FabricHeight / _generatorSettings.Density; ++zIndex)
             {
@@ -59,7 +59,8 @@ namespace CodeBase.Infrastructure.Services.MeshGenerator
                 Vector3 direction = nextPoint - nearestPoint;
                 Vector3 intersectionPoint = LineLineIntersection(nearestPoint, direction, pointPosition, Vector3.left * _generatorSettings.Density);
                 List<int> targetList = rowWidthLeft;
-                BMesh targetMesh = leftMesh;
+                MeshInfoContainer targetMeshContainer = leftMeshContainer;
+                targetMeshContainer.Indices.Add(new List<int>());
                 int xIndex = 0;
                 bool isIntersectionDetected = false;
                 for (; xIndex < _generatorSettings.FabricWidth / _generatorSettings.Density; ++xIndex)
@@ -71,15 +72,17 @@ namespace CodeBase.Infrastructure.Services.MeshGenerator
                         pointPosition = intersectionPoint;
                     }
 
-                    targetMesh.AddVertex(pointPosition);
+                    targetMeshContainer.BMesh.AddVertex(pointPosition);
+                    targetMeshContainer.Indices[zIndex].Add(targetMeshContainer.BMesh.vertices.Count - 1);
 
                     if (isIntersected)
                     {
                         targetList.Add(xIndex + 1);
                         targetList = rowWidthRight;
-                        targetMesh = rightMesh;
+                        targetMeshContainer = rightMeshContainer;
                         pointPosition.x -= _generatorSettings.Density;
                         isIntersectionDetected = true;
+                        targetMeshContainer.Indices.Add(new List<int>());
                     }
                 }
 
@@ -87,33 +90,39 @@ namespace CodeBase.Infrastructure.Services.MeshGenerator
             }
         }
 
-        private void GenerateTriangles(BMesh mesh, List<int> rowWidth, bool isLeftSide)
+        private void GenerateTriangles(MeshInfoContainer meshInfoContainer, List<int> rowWidth)
         {
-            List<RowContainer> realIndexes = GenerateRealIndexes(rowWidth, isLeftSide);
+            List<RowContainer> realIndexes = GenerateRealIndexes(rowWidth, meshInfoContainer);
             realIndexes.ForEach(rowContainer =>
             {
                 List<int> firstRow = rowContainer.FirstRow;
                 List<int> secondRow = rowContainer.SecondRow;
                 for (int i = 1; i < firstRow.Count; i++)
                 {
+                    if (firstRow.Last() >= meshInfoContainer.BMesh.vertices.Count ||
+                        secondRow.Last() >= meshInfoContainer.BMesh.vertices.Count)
+                    {
+                        Debug.Log("");
+                    }
                     int[] firstTriangle = { secondRow[i-1], firstRow[i - 1], firstRow[i]};
                     if (firstTriangle.Distinct().Count() == 3)
                     {
-                        mesh.AddFace(secondRow[i-1], firstRow[i - 1], firstRow[i]);
+                        meshInfoContainer.BMesh.AddFace(secondRow[i-1], firstRow[i - 1], firstRow[i]);
                     }
                     int[] secondTriangle = {secondRow[i], secondRow[i - 1], firstRow[i]};
                     if (secondTriangle.Distinct().Count() == 3)
                     {
-                        mesh.AddFace(secondRow[i], secondRow[i - 1], firstRow[i]);
+                        meshInfoContainer.BMesh.AddFace(secondRow[i], secondRow[i - 1], firstRow[i]);
                     }
                 }
             });
         }
 
-        private List<RowContainer> GenerateRealIndexes(List<int> rowWidth, bool isLeftSide)
+        private List<RowContainer> GenerateRealIndexes(List<int> rowWidth, MeshInfoContainer meshInfoContainer)
         {
             List<RowContainer> realIndexes = new List<RowContainer>();
             int currentIndex = -1;
+            
             for (var i = 1; i < rowWidth.Count; i++)
             {
                 RowContainer rowContainer = new RowContainer();
@@ -126,9 +135,9 @@ namespace CodeBase.Infrastructure.Services.MeshGenerator
                 {
                     int delta = Mathf.Abs(currentIndexAmount - previousIndexAmount);
                     List<int> targetCollection = currentIndexAmount > previousIndexAmount ? rowContainer.FirstRow : rowContainer.SecondRow;
-                    var targetNumber = isLeftSide ? targetCollection.Last() : targetCollection.First();
+                    var targetNumber = meshInfoContainer.IsLeft ? targetCollection.Last() : targetCollection.First();
                     var additionalIndices = Enumerable.Range(0, delta).Select(x => targetNumber);
-                    targetCollection.InsertRange(isLeftSide ? targetCollection.Count : 0, additionalIndices);
+                    targetCollection.InsertRange(meshInfoContainer.IsLeft ? targetCollection.Count : 0, additionalIndices);
                 }
                 realIndexes.Add(rowContainer);
             }

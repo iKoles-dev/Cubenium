@@ -24,6 +24,10 @@ namespace CodeBase.Infrastructure
                 .BindInterfacesAndSelfTo<GeneratorSettings>()
                 .FromResource(AssetPath.GeneratorSettings)
                 .AsSingle();
+            Container
+                .BindInterfacesAndSelfTo<MeshSettings>()
+                .FromResource(AssetPath.MeshSettings)
+                .AsSingle();
         }
     }
 }
