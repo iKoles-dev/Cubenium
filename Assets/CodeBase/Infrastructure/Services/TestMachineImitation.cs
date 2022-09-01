@@ -14,7 +14,7 @@ namespace CodeBase.Infrastructure.Services
 
         public void Initialize()
         {
-            _meshGeneratorService.Generate(100, 100, 100);
+            _meshGeneratorService.Generate();
         }
     }
 }
