@@ -1,5 +1,6 @@
 ﻿using CodeBase.Infrastructure.Services;
 using CodeBase.Infrastructure.Services.MeshGenerator;
+using CodeBase.Infrastructure.StaticData;
 using Zenject;
 
 namespace CodeBase.Infrastructure
@@ -15,6 +16,10 @@ namespace CodeBase.Infrastructure
                 .BindInterfacesAndSelfTo<TestMachineImitation>()
                 .AsSingle()
                 .NonLazy();
+            Container
+                .BindInterfacesAndSelfTo<GeneratorSettings>()
+                .FromResource(AssetPath.GeneratorSettings)
+                .AsSingle();
         }
     }
 }

@@ -1,15 +1,19 @@
 ﻿using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using Unity.Mathematics;
+using CodeBase.Infrastructure.StaticData;
 using UnityEngine;
-using Color = UnityEngine.Color;
 
 namespace CodeBase.Infrastructure.Services.MeshGenerator
 {
 
     public class MeshGeneratorService
     {
+        private readonly GeneratorSettings _generatorSettings;
+
+        public MeshGeneratorService(GeneratorSettings generatorSettings)
+        {
+            _generatorSettings = generatorSettings;
+        }
 
         public Mesh Generate()
         {
@@ -36,16 +40,13 @@ namespace CodeBase.Infrastructure.Services.MeshGenerator
                 new Vector3(1, 0, 2.1f),
                 new Vector3(2, 0, 3.1f),
             };
-            float step = .05f;
             
             BMesh leftMesh = new BMesh();
             BMesh rightMesh = new BMesh();
-            var height = 3;
-            var width = 6;
             List<int> rowWidthLeft = new List<int>();
             List<int> rowWidthRight = new List<int>();
             
-            GenerateVertices(height, step, points, rowWidthLeft, leftMesh, width, rowWidthRight, rightMesh);
+            GenerateVertices(points, rowWidthLeft, rowWidthRight, leftMesh, rightMesh);
             
             GenerateTriangles(leftMesh, rowWidthLeft, true);
             GenerateTriangles(rightMesh, rowWidthRight, false);
@@ -53,22 +54,22 @@ namespace CodeBase.Infrastructure.Services.MeshGenerator
             BMeshUnity.SetInMeshFilter(rightMesh, rightMeshFilter);
         }
 
-        private static void GenerateVertices(int height, float step, List<Vector3> points, List<int> rowWidthLeft, BMesh leftMesh, int width, List<int> rowWidthRight, BMesh rightMesh)
+        private void GenerateVertices(List<Vector3> cutPoints, List<int> rowWidthLeft, List<int> rowWidthRight, BMesh leftMesh, BMesh rightMesh)
         {
-            for (int zIndex = 0; zIndex < height / step; ++zIndex)
+            for (int zIndex = 0; zIndex < _generatorSettings.FabricHeight / _generatorSettings.Density; ++zIndex)
             {
-                Vector3 pointPosition = new Vector3(0, 0, step * zIndex);
-                Vector3 nearestPoint = points.Where(point => point.z <= zIndex * step).OrderByDescending(x => x.z).First();
-                Vector3 nextPoint = points[points.IndexOf(nearestPoint) + 1];
+                Vector3 pointPosition = new Vector3(0, 0, _generatorSettings.Density * zIndex);
+                Vector3 nearestPoint = cutPoints.Where(point => point.z <= zIndex * _generatorSettings.Density).OrderByDescending(x => x.z).First();
+                Vector3 nextPoint = cutPoints[cutPoints.IndexOf(nearestPoint) + 1];
                 Vector3 direction = nextPoint - nearestPoint;
-                Vector3 intersectionPoint = LineLineIntersection(nearestPoint, direction, pointPosition, Vector3.left * step);
+                Vector3 intersectionPoint = LineLineIntersection(nearestPoint, direction, pointPosition, Vector3.left * _generatorSettings.Density);
                 List<int> targetList = rowWidthLeft;
                 BMesh targetMesh = leftMesh;
                 int xIndex = 0;
                 bool isIntersectionDetected = false;
-                for (; xIndex < width / step; ++xIndex)
+                for (; xIndex < _generatorSettings.FabricWidth / _generatorSettings.Density; ++xIndex)
                 {
-                    pointPosition.x += step;
+                    pointPosition.x += _generatorSettings.Density;
                     bool isIntersected = isIntersectionDetected == false && pointPosition.x > intersectionPoint.x;
                     if (isIntersected)
                     {
@@ -82,7 +83,7 @@ namespace CodeBase.Infrastructure.Services.MeshGenerator
                         targetList.Add(xIndex + 1);
                         targetList = rowWidthRight;
                         targetMesh = rightMesh;
-                        pointPosition.x -= step;
+                        pointPosition.x -= _generatorSettings.Density;
                         isIntersectionDetected = true;
                     }
                 }
