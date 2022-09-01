@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using CodeBase.Infrastructure.Services.CutPointsGenerator;
 using CodeBase.Infrastructure.StaticData;
 using UnityEngine;
 
@@ -9,10 +10,12 @@ namespace CodeBase.Infrastructure.Services.MeshGenerator
     public class MeshGeneratorService
     {
         private readonly GeneratorSettings _generatorSettings;
+        private readonly CutPointsGeneratorService _cutPointsGenerator;
 
-        public MeshGeneratorService(GeneratorSettings generatorSettings)
+        public MeshGeneratorService(GeneratorSettings generatorSettings, CutPointsGeneratorService cutPointsGenerator)
         {
             _generatorSettings = generatorSettings;
+            _cutPointsGenerator = cutPointsGenerator;
         }
 
         public Mesh Generate()
@@ -33,20 +36,12 @@ namespace CodeBase.Infrastructure.Services.MeshGenerator
 
         private void Generate(MeshFilter leftMeshFilter, MeshFilter rightMeshFilter)
         {
-            List<Vector3> points = new List<Vector3>
-            {
-                new Vector3(2,0,-0.5f),
-                new Vector3(4, 0 , 1.1f),
-                new Vector3(1, 0, 2.1f),
-                new Vector3(2, 0, 3.1f),
-            };
-            
             BMesh leftMesh = new BMesh();
             BMesh rightMesh = new BMesh();
             List<int> rowWidthLeft = new List<int>();
             List<int> rowWidthRight = new List<int>();
             
-            GenerateVertices(points, rowWidthLeft, rowWidthRight, leftMesh, rightMesh);
+            GenerateVertices(_cutPointsGenerator.Points, rowWidthLeft, rowWidthRight, leftMesh, rightMesh);
             
             GenerateTriangles(leftMesh, rowWidthLeft, true);
             GenerateTriangles(rightMesh, rowWidthRight, false);

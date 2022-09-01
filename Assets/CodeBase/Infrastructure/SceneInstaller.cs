@@ -1,4 +1,5 @@
 ﻿using CodeBase.Infrastructure.Services;
+using CodeBase.Infrastructure.Services.CutPointsGenerator;
 using CodeBase.Infrastructure.Services.MeshGenerator;
 using CodeBase.Infrastructure.StaticData;
 using Zenject;
@@ -11,6 +12,9 @@ namespace CodeBase.Infrastructure
         {
             Container
                 .BindInterfacesAndSelfTo<MeshGeneratorService>()
+                .AsSingle();
+            Container
+                .BindInterfacesAndSelfTo<CutPointsGeneratorService>()
                 .AsSingle();
             Container
                 .BindInterfacesAndSelfTo<TestMachineImitation>()
