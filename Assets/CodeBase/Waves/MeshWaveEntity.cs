@@ -10,14 +10,17 @@ namespace CodeBase.Waves
     {
         private MeshSettings _meshSettings;
         private MeshInfoContainer _meshInfoContainer;
-        private Vector3 _waveOriginPosition;
+        private Vector3 _center;
+        private Vector3 _wavePointPosition;
         private Vector3[] _vertices;
+        private const float SpeedModificator = 10;
 
         [Inject]
         private void Construct(GeneratorSettings generatorSettings, MeshSettings meshSettings)
         {
             _meshSettings = meshSettings;
-            _waveOriginPosition = new Vector3(generatorSettings.FabricWidth / 2, 0, generatorSettings.FabricHeight / 2);
+            _center =new Vector3(generatorSettings.FabricWidth / 2, 0, generatorSettings.FabricHeight / 2);
+            _wavePointPosition = new Vector3(generatorSettings.FabricWidth / 2, 0, generatorSettings.FabricHeight / 2);
             SetWaverOriginPosition();
         }
         public void Initialize(MeshInfoContainer meshInfoContainer)
@@ -26,8 +29,22 @@ namespace CodeBase.Waves
             _vertices = meshInfoContainer.Mesh.vertices;
         }
 
-        private void Update() => 
+        private void Update()
+        {
+            ChangeWavePointPosition();
             GenerateWaves();
+        }
+
+        private void ChangeWavePointPosition() =>
+            _wavePointPosition = RotatePointAroundPivot(_wavePointPosition, _center,
+                new Vector3(0, _meshSettings.CentralPointRotationSpeed / SpeedModificator, 0));
+
+        private Vector3 RotatePointAroundPivot(Vector3 point, Vector3 pivot, Vector3 angles) {
+            Vector3 dir = point - pivot;
+            dir = Quaternion.Euler(angles) * dir;
+            point = dir + pivot;
+            return point;
+        }
 
         private void GenerateWaves()
         {
@@ -39,7 +56,7 @@ namespace CodeBase.Waves
 
                     vertex.y = 0.0f;
 
-                    float distance = Vector3.Distance(vertex, _waveOriginPosition);
+                    float distance = Vector3.Distance(vertex, _wavePointPosition);
                     distance = (distance % _meshSettings.WaveLength) / _meshSettings.WaveLength;
                     float farFromCutBorder = (float)j / _meshInfoContainer.Indices[i].Count;
                     if (_meshInfoContainer.IsLeft)
@@ -59,6 +76,6 @@ namespace CodeBase.Waves
         }
 
         private void SetWaverOriginPosition() => 
-            _waveOriginPosition += Vector3.right * 50 + Vector3.forward * 50;
+            _wavePointPosition += Vector3.right * 50 + Vector3.forward * 50;
     }
 }

@@ -16,13 +16,14 @@ namespace CodeBase.Infrastructure.Services.MeshGenerator
         public BMesh BMesh { get; private set; }
         public List<List<int>> Indices = new();
 
-        public MeshInfoContainer(bool isLeft)
+        public MeshInfoContainer(bool isLeft, Material material)
         {
             IsLeft = isLeft;
             BMesh = new BMesh();
             GameObject = new GameObject(IsLeft ? "LeftMesh" : "RightMesh");
             MeshFilter = GameObject.AddComponent<MeshFilter>();
             MeshRenderer = GameObject.AddComponent<MeshRenderer>();
+            MeshRenderer.material = material;
         }
 
         public void CreateMeshWave()

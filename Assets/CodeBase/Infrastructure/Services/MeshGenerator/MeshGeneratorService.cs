@@ -23,8 +23,8 @@ namespace CodeBase.Infrastructure.Services.MeshGenerator
 
         public void Generate()
         {
-            MeshInfoContainer leftMeshInfo = new MeshInfoContainer(true);
-            MeshInfoContainer rightMeshInfo = new MeshInfoContainer(false);
+            MeshInfoContainer leftMeshInfo = new MeshInfoContainer(true, _generatorSettings.Material);
+            MeshInfoContainer rightMeshInfo = new MeshInfoContainer(false, _generatorSettings.Material);
             Generate(leftMeshInfo,rightMeshInfo);
             leftMeshInfo.GameObject.transform.position -= new Vector3(_generatorSettings.DistanceBetweenTwoMeshes/2, 0, 0);
             rightMeshInfo.GameObject.transform.position += new Vector3(_generatorSettings.DistanceBetweenTwoMeshes/2, 0, 0);

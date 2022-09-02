@@ -9,5 +9,6 @@ namespace CodeBase.Infrastructure.StaticData
         public float WaveHeight = 0.5f;
         public float WaveFrequency = 0.5f;
         public float WaveLength = 0.75f;
+        public float CentralPointRotationSpeed = 0.5f;
     }
 }

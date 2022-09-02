@@ -11,6 +11,8 @@ namespace CodeBase.Infrastructure.StaticData
         [Min(1)]
         public float DistanceBetweenTwoMeshes;
         
+        public Material Material;
+        
         [MinValue("@Density*3"), BoxGroup("Fabric Parametres")]
         public float FabricWidth;
         [MinValue("@Density*3"), BoxGroup("Fabric Parametres")]
