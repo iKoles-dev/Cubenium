@@ -43,8 +43,10 @@ namespace CodeBase.Infrastructure.Services.MeshGenerator
             
             GenerateTriangles(leftMeshInfoContainer, rowWidthLeft);
             GenerateTriangles(rightMeshInfoContainer, rowWidthRight);
+            
             BMeshUnity.SetInMeshFilter(leftMeshInfoContainer.BMesh, leftMeshInfoContainer.MeshFilter);
             BMeshUnity.SetInMeshFilter(rightMeshInfoContainer.BMesh, rightMeshInfoContainer.MeshFilter);
+            
             leftMeshInfoContainer.Mesh = leftMeshInfoContainer.MeshFilter.mesh;
             rightMeshInfoContainer.Mesh = rightMeshInfoContainer.MeshFilter.mesh;
         }
