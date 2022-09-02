@@ -22,7 +22,7 @@ namespace CodeBase.Player
         private CutPointsGeneratorService _cutPointsGeneratorService;
         private Vector3 _relativePosition = Vector3.zero;
         private GeneratorSettings _generatorSettings;
-        private const float Modificator = 20;
+        private const float Modificator = 50;
         private float _playerHalfSize;
 
         private void Awake() => 

@@ -97,5 +97,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _speedPerUnit: 0.5
-  _sensitivity: 1
-  _rotationSpeed: 0.5
+  _sensitivity: 0.1
+  _rotationTime: 0.5
