@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using CodeBase.Infrastructure;
 using CodeBase.Infrastructure.Services;
 using CodeBase.Infrastructure.Services.CutPointsGenerator;
 using CodeBase.Infrastructure.Services.Input;
@@ -7,10 +8,12 @@ using CodeBase.Infrastructure.StaticData;
 using DG.Tweening;
 using UniRx;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Zenject;
 
 namespace CodeBase.Player
 {
+    [RequireComponent(typeof(MeshRenderer))]
     public class PlayerEntity : MonoBehaviour
     {
         [SerializeField] private float _speedPerUnit = .5f;
@@ -19,13 +22,15 @@ namespace CodeBase.Player
         private CutPointsGeneratorService _cutPointsGeneratorService;
         private Vector3 _relativePosition = Vector3.zero;
         private GeneratorSettings _generatorSettings;
-        private TestMachineImitation _testMachineImitation;
         private const float Modificator = 20;
+        private float _playerHalfSize;
+
+        private void Awake() => 
+            _playerHalfSize = GetComponent<MeshRenderer>().bounds.extents.x;
 
         [Inject]
-        private void Construct(IInputService inputService, CutPointsGeneratorService cutPointsGeneratorService, GeneratorSettings generatorSettings, TestMachineImitation testMachineImitation)
+        private void Construct(IInputService inputService, CutPointsGeneratorService cutPointsGeneratorService, GeneratorSettings generatorSettings)
         {
-            _testMachineImitation = testMachineImitation;
             _generatorSettings = generatorSettings;
             _cutPointsGeneratorService = cutPointsGeneratorService;
             inputService
@@ -58,13 +63,16 @@ namespace CodeBase.Player
                 DOTween.Kill(transform);
             }
 
-            _testMachineImitation.GameEnd();
+            ReloadScene();
         }
 
         private void ChangeRelativePosition(Vector3 vector3delta)
         {
-            float clampedX = Mathf.Clamp(vector3delta.x/Modificator*_sensitivity + _relativePosition.x, -_generatorSettings.DistanceBetweenTwoMeshes/2, _generatorSettings.DistanceBetweenTwoMeshes/2);
+            float clampedX = Mathf.Clamp(vector3delta.x/Modificator*_sensitivity + _relativePosition.x, -_generatorSettings.DistanceBetweenTwoMeshes/2 + _playerHalfSize, _generatorSettings.DistanceBetweenTwoMeshes/2 - _playerHalfSize);
             _relativePosition = new Vector3(clampedX, 0, 0);
         }
+
+        private static void ReloadScene() => 
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

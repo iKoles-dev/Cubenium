@@ -30,10 +30,6 @@ namespace CodeBase.Infrastructure
                 .BindInterfacesAndSelfTo<CutPointsGeneratorService>()
                 .AsSingle();
             Container
-                .BindInterfacesAndSelfTo<TestMachineImitation>()
-                .AsSingle()
-                .NonLazy();
-            Container
                 .BindInterfacesAndSelfTo<GeneratorSettings>()
                 .FromResource(AssetPath.GeneratorSettings)
                 .AsSingle();
