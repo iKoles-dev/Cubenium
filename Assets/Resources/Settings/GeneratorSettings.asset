@@ -23,6 +23,7 @@ MonoBehaviour:
     SerializationNodes: []
   Density: 0.1
   DistanceBetweenTwoMeshes: 2
+  Material: {fileID: 2100000, guid: a21b4e9e8b4786c41bf682397020cf40, type: 2}
   FabricWidth: 10
   FabricHeight: 10
   CuttingLineWidth: {x: 2, y: 4}

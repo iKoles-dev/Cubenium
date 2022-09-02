@@ -1,5 +1,8 @@
-﻿using CodeBase.Infrastructure.Services;
+﻿using CodeBase.Infrastructure.Factories;
+using CodeBase.Infrastructure.Services;
+using CodeBase.Infrastructure.Services.Camera;
 using CodeBase.Infrastructure.Services.CutPointsGenerator;
+using CodeBase.Infrastructure.Services.Input;
 using CodeBase.Infrastructure.Services.MeshGenerator;
 using CodeBase.Infrastructure.StaticData;
 using Zenject;
@@ -12,6 +15,16 @@ namespace CodeBase.Infrastructure
         {
             Container
                 .BindInterfacesAndSelfTo<MeshGeneratorService>()
+                .AsSingle();
+            Container
+                .BindInterfacesAndSelfTo<InputService>()
+                .AsSingle();
+            Container
+                .BindInterfacesAndSelfTo<PlayerFactory>()
+                .AsSingle();
+            Container
+                .BindInterfacesAndSelfTo<CameraService>()
+                .FromInstance(FindObjectOfType<CameraService>())
                 .AsSingle();
             Container
                 .BindInterfacesAndSelfTo<CutPointsGeneratorService>()

@@ -24,3 +24,4 @@ MonoBehaviour:
   WaveHeight: 0.2
   WaveFrequency: 0.5
   WaveLength: 1.65
+  CentralPointRotationSpeed: 3

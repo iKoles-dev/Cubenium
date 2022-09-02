@@ -4,5 +4,6 @@
     {
         public const string GeneratorSettings = "Settings/GeneratorSettings";
         public const string MeshSettings = "Settings/MeshSettings";
+        public const string PlayerPrefab = "Player/PlayerEntity";
     }
 }
